@@ -10,7 +10,7 @@ points = torch.tensor([[0.5, 0], [1, 1], [0, 1]], device=device)
 point = torch.tensor([0.5, 0.5], device=device)  # Initial point
 
 # Number of iterations
-num_iterations = 100000
+num_iterations = 1000000
 
 # Initialize arrays to store x and y coordinates
 x_coords = torch.empty(num_iterations, device=device)

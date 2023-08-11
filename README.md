@@ -1,2 +1,2 @@
 # comp3710
-COMP3710 - Pattern Recognition and Analysis
+This repository outlines my lab activities and progress through Semester 2 2023 in COMP3710.
