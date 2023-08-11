@@ -1,3 +1,3 @@
 # Sierpinski Triangle Fractal
 
-![fractal-wiki.png]
+!(fractal-wiki.png)
