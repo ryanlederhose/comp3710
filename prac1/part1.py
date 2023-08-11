@@ -18,10 +18,25 @@ y = torch.Tensor(Y)
 x = x.to(device)
 y = y.to(device)
 
-# Compute Gaussian
-z = torch.exp(-(x**2 + y**2) / 2.0)
+# Compute equations
+z1 = torch.exp(-(x**2 + y**2) / 2.0)    # Gaussian
+z2 = torch.sin(torch.sqrt(x**2 + y**2)) # 2d Sine
+z = z1 * z2                             # Multiplied outputs
 
-# Plot
+# Plot z1
+plt.imshow(z1.numpy())
+plt.tight_layout()
+plt.title("Gaussian")
+plt.show()
+
+# Plot z2
+plt.imshow(z2.numpy())
+plt.tight_layout()
+plt.title("2d Sine")
+plt.show()
+
+# Plot z
 plt.imshow(z.numpy())
 plt.tight_layout()
+plt.title("Multiplied Gaussian and 2d Sine")
 plt.show()
