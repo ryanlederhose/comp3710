@@ -9,6 +9,8 @@
 # Construction
 * Pytorch Tensors are used to form a coordinate map of the fractal
 * There are 1,000,000 iterations to form the fractal
+* Matplotlib used to plot coordinate map of fractal
+* GPU accelerated computing
 ## Iteration Process
 1. Vertex of triangle chosen at random
 2. Midpoint calaculated between initial point and chosen vertex
