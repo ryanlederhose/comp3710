@@ -4,6 +4,11 @@ import matplotlib.pyplot as plt
 
 print("PyTorch Version:", torch.__version__)
 
+# Sine parameters
+A = 100
+phase = 0
+freq = 1
+
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -20,7 +25,7 @@ y = y.to(device)
 
 # Compute equations
 z1 = torch.exp(-(x**2 + y**2) / 2.0)    # Gaussian
-z2 = torch.sin(torch.sqrt(x**2 + y**2)) # 2d Sine
+z2 = A * torch.sin(freq * (x + y) + phase) # 2d Sine
 z = z1 * z2                             # Multiplied outputs
 
 # Plot z1
