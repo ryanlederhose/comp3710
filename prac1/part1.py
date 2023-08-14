@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-print("PyTorch Version:", torch.__version__)
+print("PyTorch Version:", torch.__version__)    # PyTorch version
 
 # Sine parameters
 A = 100
@@ -24,9 +24,9 @@ x = x.to(device)
 y = y.to(device)
 
 # Compute equations
-z1 = torch.exp(-(x**2 + y**2) / 2.0)    # Gaussian
-z2 = A * torch.sin(freq * (x + y) + phase) # 2d Sine
-z = z1 * z2                             # Multiplied outputs
+z1 = torch.exp(-(x**2 + y**2) / 2.0)        # Gaussian
+z2 = A * torch.sin(freq * (x + y) + phase)  # 2d Sine
+z = z1 * z2                                 # Multiplied outputs
 
 # Plot z1
 plt.imshow(z1.numpy())
