@@ -11,7 +11,7 @@ def logistic_map(x, y):
     yield x_next, y_next
 
 # Parameters
-num_points = 30000000  # Number of points in the x-axis
+num_points = 3000000  # Number of points in the x-axis
 
 # Generate an array of r values and fractal data
 r_values = torch.zeros(num_points + 1)
