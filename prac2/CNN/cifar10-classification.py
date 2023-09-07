@@ -35,8 +35,8 @@ class Net(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 3)
         self.conv3 = nn.Conv2d(16, 32, 3)
-        self.conv4 = nn.Conv2d(32, 32, 3)
-        self.fc1 = nn.Linear(18432, 120)
+        self.conv4 = nn.Conv2d(32, 48, 3)
+        self.fc1 = nn.Linear(27648, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
@@ -57,9 +57,9 @@ def main():
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.0001)
+    optimizer = optim.Adam(net.parameters(), lr=0.00025)
 
-    for epoch in range(100):  # loop over the dataset multiple times
+    for epoch in range(60):  # loop over the dataset multiple times
 
         running_loss = 0.0
         for i, data in enumerate(tqdm(trainloader, 0)):
