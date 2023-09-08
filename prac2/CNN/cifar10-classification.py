@@ -60,9 +60,9 @@ def main():
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.00025)
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
 
-    for epoch in range(60):  # loop over the dataset multiple times
+    for epoch in range(10):  # loop over the dataset multiple times
 
         running_loss = 0.0
         for i, data in enumerate(tqdm(trainloader, 0)):
