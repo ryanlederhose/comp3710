@@ -8,6 +8,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
 from tqdm import tqdm
+import time
+
+time_start = time.process_time()
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -31,14 +34,12 @@ classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 class Net(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 3)
+        self.conv1 = nn.Conv2d(3, 64, 4)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 3)
-        self.conv3 = nn.Conv2d(16, 32, 3)
-        self.conv4 = nn.Conv2d(32, 48, 3)
-        self.conv4 = nn.Conv2d(48, 48, 3)
-        self.conv4 = nn.Conv2d(32, 48, 3)
-        self.fc1 = nn.Linear(27648, 120)
+        self.conv2 = nn.Conv2d(64, 128, 4)
+        self.conv3 = nn.Conv2d(128, 256, 4)
+        self.conv4 = nn.Conv2d(256, 512, 4)
+        self.fc1 = nn.Linear(204800, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
@@ -124,6 +125,8 @@ def main():
     for classname, correct_count in correct_pred.items():
         accuracy = 100 * float(correct_count) / total_pred[classname]
         print(f'Accuracy for class: {classname:5s} is {accuracy:.1f} %')
+
+    print("Running Time: ", (time.process_time() - time_start))
 
 if __name__ == '__main__':
     main()
