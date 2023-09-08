@@ -36,6 +36,8 @@ class Net(nn.Module):
         self.conv2 = nn.Conv2d(6, 16, 3)
         self.conv3 = nn.Conv2d(16, 32, 3)
         self.conv4 = nn.Conv2d(32, 48, 3)
+        self.conv4 = nn.Conv2d(48, 48, 3)
+        self.conv4 = nn.Conv2d(32, 48, 3)
         self.fc1 = nn.Linear(27648, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
