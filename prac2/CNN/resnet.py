@@ -105,9 +105,9 @@ def main():
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.0025)
+    optimizer = optim.Adam(net.parameters(), lr=0.01)
 
-    for epoch in range(60): 
+    for epoch in range(80): 
         running_loss = 0.0
         for i, data in enumerate(tqdm(trainloader, 0)):
             inputs, labels = data[0].to(device), data[1].to(device)
