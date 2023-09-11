@@ -3,7 +3,6 @@ from torch.optim import Adam
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torchvision.utils import make_grid
 from torchvision.datasets import ImageFolder
 import torchvision.transforms as T
 import matplotlib.pyplot as plt
@@ -171,9 +170,11 @@ def train(epochs, lr, trainloader, fixed_latent, start_idx = 1):
     real_scores = []
     fake_scores = []
 
+    # Define optimisers
     discriminator_optimizer = Adam(discriminator.parameters(), lr=lr, betas=(0.5, 0.999))
     generator_optimizer = Adam(generator.parameters(), lr=lr, betas=(0.5, 0.999))
 
+    # Train models
     for epoch in range(epochs):
         for batch_idx, (data, targets) in enumerate(tqdm(trainloader)):
             dLoss, real_score, fake_score = train_discriminator(data.to(device), discriminator_optimizer)
@@ -201,12 +202,14 @@ def main():
     fixed_latent = torch.randn(64, latent_size, 1, 1, device=device)
     save_samples(0, fixed_latent)
 
-    history = train(epochs, lr, trainloader, fixed_latent)
-    generatorLosses, discriminatorLosses, real_scores, fake_scores = history
+    # Train generator and discriminator
+    generatorLosses, discriminatorLosses, real_scores, fake_scores = train(epochs, lr, trainloader, fixed_latent)
 
+    # Save models
     torch.save(generator.state_dict(), 'G.pth')
     torch.save(discriminator.state_dict(), 'D.pth')
 
+    # Plot discriminator and generator losses
     plt.plot(discriminatorLosses, '-')
     plt.plot(generatorLosses, '-')
     plt.xlabel('epoch')
@@ -215,6 +218,7 @@ def main():
     plt.title('Losses')
     plt.show()
 
+    # Plot scores of real and generated images
     plt.plot(real_scores, '-')
     plt.plot(fake_scores, '-')
     plt.xlabel('epoch')
