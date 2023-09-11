@@ -5,4 +5,4 @@
 #SBATCH --gres=gpu:1
 
 source /home/Student/s4583670/miniconda3/bin/activate comp3710
-python3 cnn_lfw.py
+python3 resnet.py
