@@ -23,7 +23,7 @@ time_start = time.process_time()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Parameters
-batch_size = 64
+batch_size = 128
 
 transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
@@ -107,7 +107,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=0.01)
 
-    for epoch in range(80): 
+    for epoch in range(120): 
         running_loss = 0.0
         for i, data in enumerate(tqdm(trainloader, 0)):
             inputs, labels = data[0].to(device), data[1].to(device)
