@@ -105,7 +105,7 @@ def main():
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.01)
+    optimizer = optim.Adam(net.parameters(), lr=0.1)
 
     for epoch in range(120): 
         running_loss = 0.0
