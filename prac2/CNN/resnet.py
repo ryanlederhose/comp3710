@@ -105,7 +105,9 @@ def main():
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.01)
+    # optimizer = optim.Adam(net.parameters(), lr=0.01)
+    optimizer = optim.SGD(net.parameters(), lr=0.01,
+                      momentum=0.9, weight_decay=5e-4)
 
     for epoch in range(200): 
         running_loss = 0.0
