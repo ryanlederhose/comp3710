@@ -23,7 +23,7 @@ time_start = time.process_time()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Parameters
-batch_size = 128
+batch_size = 32
 
 transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
