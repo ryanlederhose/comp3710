@@ -31,3 +31,5 @@ Epoch 60:
 
 ![real_fake_scores](https://github.com/ryanlederhose/comp3710/assets/112144274/a3cceb59-7135-4081-bd53-f13f92e03b19)
 
+# References
+https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html
