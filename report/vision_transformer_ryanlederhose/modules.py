@@ -40,8 +40,7 @@ class InputEmbedding(nn.Module):
         self.patch_size = args.patch_size
         self.n_channels = args.n_channels
         self.latent_size = args.latent_size
-        use_cuda = not args.no_cuda and torch.cuda.is_available()
-        self.device = torch.device("cuda" if use_cuda else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = args.batch_size
         self.input_size = self.patch_size * self.patch_size * self.n_channels
 
@@ -60,8 +59,9 @@ class InputEmbedding(nn.Module):
 
         linear_projection = self.LinearProjection(patches).to(self.device)
         b, n, _ = linear_projection.shape
+        self.class_token = nn.Parameter(torch.randn(linear_projection.shape[0], 1, self.latent_size)).to(self.device)
         linear_projection = torch.cat((self.class_token, linear_projection), dim=1)
-        pos_embed = self.pos_embedding[:, :n + 1, :]
+        pos_embed = self.pos_embedding[:linear_projection.shape[0], :n + 1, :]
         linear_projection += pos_embed
 
         return linear_projection

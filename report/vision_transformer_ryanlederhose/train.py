@@ -46,19 +46,29 @@ class TrainEval:
         self.model.eval()
         total_loss = 0.0
         tk = tqdm(self.val_dataloader, desc="EPOCH" + "[VALID]" + str(current_epoch + 1) + "/" + str(self.epoch))
+        num_correct = 0
+        num_samples = 1
 
-        for t, data in enumerate(tk):
-            images, labels = data
-            images, labels = images.to(self.device), labels.to(self.device)
+        with torch.no_grad():
+            for t, data in enumerate(tk):
+                images, labels = data
+                images, labels = images.to(self.device), labels.to(self.device)
 
-            logits = self.model(images)
-            loss = self.criterion(logits, labels)
+                scores = self.model(images)
+                _, predictions = scores.max(1)
+                num_correct += (predictions == labels).sum()
+                num_samples += predictions.size(0)
 
-            total_loss += loss.item()
-            tk.set_postfix({"Loss": "%6f" % float(total_loss / (t + 1))})
-            if self.args.dry_run:
-                break
+                logits = self.model(images)
+                loss = self.criterion(logits, labels)
 
+                total_loss += loss.item()
+                tk.set_postfix({"Loss": "%6f" % float(total_loss / (t + 1))})
+                if self.args.dry_run:
+                    break
+            
+        self.model.train()
+        print('Accuracy: ', float(num_correct / num_samples))
         return total_loss / len(self.val_dataloader)
 
     def train(self):
@@ -95,8 +105,6 @@ class TrainEval:
 
 def main():
     parser = argparse.ArgumentParser(description='Vision Transformer in PyTorch')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
     parser.add_argument('--patch-size', type=int, default=16,
                         help='patch size for images (default : 16)')
     parser.add_argument('--latent-size', type=int, default=768,
@@ -109,24 +117,22 @@ def main():
                         help='number of encoders (default : 12)')
     parser.add_argument('--dropout', type=int, default=0.1,
                         help='dropout value (default : 0.1)')
-    parser.add_argument('--img-size', type=int, default=224,
-                        help='image size to be reshaped to (default : 224')
     parser.add_argument('--num-classes', type=int, default=2,
                         help='number of classes in dataset (default : 10 for CIFAR10)')
     parser.add_argument('--epochs', type=int, default=10,
                         help='number of epochs (default : 10)')
-    parser.add_argument('--lr', type=float, default=1e-2,
+    parser.add_argument('--lr', type=float, default=0.001,
                         help='base learning rate (default : 0.01)')
     parser.add_argument('--weight-decay', type=int, default=3e-2,
                         help='weight decay value (default : 0.03)')
-    parser.add_argument('--batch-size', type=int, default=4,
+    parser.add_argument('--batch-size', type=int, default=64,
                         help='batch size (default : 4)')
     parser.add_argument('--dry-run', action='store_true', default=False,
                         help='quickly check a single pass')
     args = parser.parse_args()
 
-    use_cuda = not args.no_cuda and torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
 
     dl = DataLoader(batch_size=args.batch_size)
     train_loader = dl.get_training_loader()
@@ -134,7 +140,8 @@ def main():
 
     model = ViT(args).to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    # optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = optim.SGD(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss()
 
     TrainEval(args, model, train_loader, test_loader, optimizer, criterion, device).train()
