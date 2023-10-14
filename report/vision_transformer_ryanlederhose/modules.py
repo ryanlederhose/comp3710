@@ -1,123 +1,107 @@
-import argparse
 import torch
 import torch.nn as nn
-import torchvision
-from torchvision.transforms import Compose, ToTensor, Resize
-from torch import optim
-import numpy as np
-from torch.hub import tqdm
-from dataset import DataLoader
 
-class PatchExtractor(nn.Module):
+class ImagePatcher(nn.Module):
+    '''
+    ImagePatcher
+
+    This class defines the functions necessary to split the input image
+    into a defined unmber of patches
+    '''
+
     def __init__(self, patch_size=16):
         super().__init__()
         self.patch_size = patch_size
 
-    def forward(self, input_data):
-        batch_size, channels, height, width = input_data.size()
-        assert height % self.patch_size == 0 and width % self.patch_size == 0, \
-            f"Input height ({height}) and width ({width}) must be divisible by patch size ({self.patch_size})"
+    def forward(self, data):
+        batch_size, channels, height, width = data.size()
+        if (height % self.patch_size != 0) or (width % self.patch_size != 0):
+            return 0
 
         num_patches_h = height // self.patch_size
         num_patches_w = width // self.patch_size
         num_patches = num_patches_h * num_patches_w
 
-        patches = input_data.unfold(2, self.patch_size, self.patch_size). \
+        patches = data.unfold(2, self.patch_size, self.patch_size). \
             unfold(3, self.patch_size, self.patch_size). \
             permute(0, 2, 3, 1, 4, 5). \
             contiguous(). \
             view(batch_size, num_patches, -1)
-
-        # Expected shape of a patch on default settings is (4, 196, 768)
-
+        
         return patches
 
-
 class InputEmbedding(nn.Module):
-
-    def __init__(self, args):
+    '''
+    InputEmbedding
+    
+    This class defines 
+    '''
+    def __init__(self, args) -> None:
         super(InputEmbedding, self).__init__()
-        self.patch_size = args.patch_size
-        self.n_channels = args.n_channels
-        self.latent_size = args.latent_size
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = args.batch_size
-        self.input_size = self.patch_size * self.patch_size * self.n_channels
-
-        # Linear projection
-        self.LinearProjection = nn.Linear(self.input_size, self.latent_size)
-        # Class token
-        self.class_token = nn.Parameter(torch.randn(self.batch_size, 1, self.latent_size)).to(self.device)
-        # Positional embedding
-        self.pos_embedding = nn.Parameter(torch.randn(self.batch_size, 1, self.latent_size)).to(self.device)
-
-    def forward(self, input_data):
-        input_data = input_data.to(self.device)
-        # Patchifying the Image
-        patchify = PatchExtractor(patch_size=self.patch_size)
-        patches = patchify(input_data)
-
-        linear_projection = self.LinearProjection(patches).to(self.device)
-        b, n, _ = linear_projection.shape
-        self.class_token = nn.Parameter(torch.randn(linear_projection.shape[0], 1, self.latent_size)).to(self.device)
-        linear_projection = torch.cat((self.class_token, linear_projection), dim=1)
-        pos_embed = self.pos_embedding[:linear_projection.shape[0], :n + 1, :]
-        linear_projection += pos_embed
-
-        return linear_projection
-
-
-class EncoderBlock(nn.Module):
-
-    def __init__(self, args):
-        super(EncoderBlock, self).__init__()
-
         self.latent_size = args.latent_size
-        self.num_heads = args.num_heads
+        self.n_channels = args.n_channels
+        self.patch_size = args.patch_size
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.input_size = self.n_channels * self.patch_size ** 2
+
+        self.positionalEmbedding = nn.Parameter(torch.randn(self.batch_size, 1, self.latent_size)).to(self.device)
+        self.classToken = nn.Parameter(torch.randn(self.batch_size, 1, self.latent_size)).to(self.device)
+        self.linearProjection = nn.Linear(self.input_size, self.latent_size)
+
+    def forward(self, input):
+        input = input.to(self.device)
+
+        imagePatcher = ImagePatcher(patch_size=self.patch_size)
+        linearProjection = self.linearProjection(imagePatcher(input)).to(self.device)
+        self.classToken = nn.Parameter(torch.randn(linearProjection.shape[0], 1, self.latent_size)).to(self.device)
+        linearProjection = torch.cat((self.classToken, linearProjection), dim=1)
+        linearProjection += self.positionalEmbedding[:linearProjection.shape[0], :linearProjection.shape[1] + 1, :]
+        return linearProjection
+
+class Encoder(nn.Module):
+    def __init__(self, args) -> None:
+        super(Encoder, self).__init__()
+
         self.dropout = args.dropout
-        self.norm = nn.LayerNorm(self.latent_size)
+        self.num_heads = args.num_heads
+        self.latent_size = args.latent_size
+        self.normLayer = nn.LayerNorm(self.latent_size)
         self.attention = nn.MultiheadAttention(self.latent_size, self.num_heads, dropout=self.dropout)
-        self.enc_MLP = nn.Sequential(
+        self.encoderMLP = nn.Sequential(
             nn.Linear(self.latent_size, self.latent_size * 4),
             nn.GELU(),
             nn.Dropout(self.dropout),
             nn.Linear(self.latent_size * 4, self.latent_size),
             nn.Dropout(self.dropout)
         )
-
-    def forward(self, emb_patches):
-        first_norm = self.norm(emb_patches)
-        attention_out = self.attention(first_norm, first_norm, first_norm)[0]
-        first_added = attention_out + emb_patches
-        second_norm = self.norm(first_added)
-        mlp_out = self.enc_MLP(second_norm)
-        output = mlp_out + first_added
-
-        return output
-
-
+    
+    def forward(self, embeddedPatches):
+        normalisation = self.normLayer(embeddedPatches)
+        attentionOut = self.attention(normalisation, normalisation, normalisation)[0]
+        normalisation = self.normLayer(attentionOut + embeddedPatches)
+        return (self.encoderMLP(normalisation) + attentionOut + embeddedPatches)
+    
 class ViT(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args) -> None:
         super(ViT, self).__init__()
 
+        self.dropout = args.dropout
+        self.num_classes = args.num_classes
         self.num_encoders = args.num_encoders
         self.latent_size = args.latent_size
-        self.num_classes = args.num_classes
-        self.dropout = args.dropout
-
+        
+        self.encoders = nn.ModuleList([Encoder(args) for i in range(self.num_encoders)])
         self.embedding = InputEmbedding(args)
-        # Encoder Stack
-        self.encoders = nn.ModuleList([EncoderBlock(args) for _ in range(self.num_encoders)])
-        self.MLPHead = nn.Sequential(
+        self.MLP = nn.Sequential(
             nn.LayerNorm(self.latent_size),
             nn.Linear(self.latent_size, self.latent_size),
-            nn.Linear(self.latent_size, self.num_classes),
+            nn.Linear(self.latent_size, self.num_classes)
         )
 
-    def forward(self, test_input):
-        enc_output = self.embedding(test_input)
-        for enc_layer in self.encoders:
-            enc_output = enc_layer(enc_output)
-
-        class_token_embed = enc_output[:, 0]
-        return self.MLPHead(class_token_embed)
+    def forward(self, input):
+        encoderOut = self.embedding(input)
+        for layer in self.encoders:
+            encoderOut = layer(encoderOut)
+        classTokenEmbedded = encoderOut[:, 0]
+        return self.MLP(classTokenEmbedded)
