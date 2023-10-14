@@ -34,7 +34,7 @@ class InputEmbedding(nn.Module):
     '''
     InputEmbedding
     
-    This class defines 
+    This class defines the input embedding module of the ViT
     '''
     def __init__(self, args) -> None:
         super(InputEmbedding, self).__init__()
@@ -52,14 +52,28 @@ class InputEmbedding(nn.Module):
     def forward(self, input):
         input = input.to(self.device)
 
+        # Get the image patcher object
         imagePatcher = ImagePatcher(patch_size=self.patch_size)
+
+        # Project the patched images onto a linear plane using a FC linear layer
         linearProjection = self.linearProjection(imagePatcher(input)).to(self.device)
+
+        # Define the class token
         self.classToken = nn.Parameter(torch.randn(linearProjection.shape[0], 1, self.latent_size)).to(self.device)
+
+        # Concatenate the class token to the embedding tokens
         linearProjection = torch.cat((self.classToken, linearProjection), dim=1)
+
+        # Add the positional embeddings to the input embeddings and class token
         linearProjection += self.positionalEmbedding[:linearProjection.shape[0], :linearProjection.shape[1] + 1, :]
         return linearProjection
 
 class Encoder(nn.Module):
+    '''
+    Encoder
+    
+    This class defines the encoder block for the ViT
+    '''
     def __init__(self, args) -> None:
         super(Encoder, self).__init__()
 
@@ -77,12 +91,24 @@ class Encoder(nn.Module):
         )
     
     def forward(self, embeddedPatches):
+        # Normalise the embedded patches
         normalisation = self.normLayer(embeddedPatches)
+
+        # Multi head attention output
         attentionOut = self.attention(normalisation, normalisation, normalisation)[0]
+
+        # Second normalisation block
         normalisation = self.normLayer(attentionOut + embeddedPatches)
+
+        # Encoder output
         return (self.encoderMLP(normalisation) + attentionOut + embeddedPatches)
     
 class ViT(nn.Module):
+    '''
+    ViT
+    
+    This class defines the vision transformer architecture
+    '''
     def __init__(self, args) -> None:
         super(ViT, self).__init__()
 
@@ -100,8 +126,15 @@ class ViT(nn.Module):
         )
 
     def forward(self, input):
+        # Get the embedding of the input
         encoderOut = self.embedding(input)
+
+        # Loop through all the encoder blocks
         for layer in self.encoders:
             encoderOut = layer(encoderOut)
+
+        # Extract the class token
         classTokenEmbedded = encoderOut[:, 0]
+
+        # Output of MLP head is classification result
         return self.MLP(classTokenEmbedded)
