@@ -24,7 +24,7 @@ class HyperParameters(object):
         self.epochs = 10
         self.lr = 2e-4
         self.weight_decay = 3e-2
-        self.batch_size = 64
+        self.batch_size = 16
         self.dry_run = False
 
 def check_accuracy(loader, model, device):
@@ -68,6 +68,7 @@ def main():
     model.train()
 
     for epoch in range(args.epochs):
+        total_loss = 0.0
         tk = tqdm(train_loader, desc="EPOCH" + "[TRAIN]" 
                   + str(epoch + 1) + "/" + str(args.epochs))
         
