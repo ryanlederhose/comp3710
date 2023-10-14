@@ -17,14 +17,14 @@ class HyperParameters(object):
         self.patch_size = 16
         self.latent_size = 768
         self.n_channels = 3
-        self.num_encoders = 16
+        self.num_encoders = 24
         self.num_heads = 12
-        self.dropout = 0.1
+        self.dropout = 0.2
         self.num_classes = 2
-        self.epochs = 10
+        self.epochs = 120
         self.lr = 2e-4
         self.weight_decay = 3e-2
-        self.batch_size = 16
+        self.batch_size = 32
         self.dry_run = False
 
 def check_accuracy(loader, model, device):
@@ -59,6 +59,7 @@ def main():
     dl = DataLoader(batch_size=args.batch_size)
     train_loader = dl.get_training_loader()
     test_loader = dl.get_test_loader()
+    valid_loader = dl.get_valid_loader()
     total_loss = 0.0
 
     model = ViT(args).to(device)

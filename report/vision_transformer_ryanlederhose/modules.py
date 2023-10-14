@@ -87,15 +87,15 @@ class Encoder(nn.Module):
             nn.GELU(),
             nn.Dropout(self.dropout),
 
-            # nn.Linear(self.latent_size * 4, self.latent_size * 4),
-            # nn.GELU(),
-            # nn.Dropout(self.dropout),
-
-            nn.Linear(self.latent_size * 4, self.latent_size * 4),
+            nn.Linear(self.latent_size * 4, self.latent_size * 8),
             nn.GELU(),
             nn.Dropout(self.dropout),
 
-            nn.Linear(self.latent_size * 4, self.latent_size * 4),
+            nn.Linear(self.latent_size * 8, self.latent_size * 8),
+            nn.GELU(),
+            nn.Dropout(self.dropout),
+
+            nn.Linear(self.latent_size * 8, self.latent_size * 4),
             nn.GELU(),
             nn.Dropout(self.dropout),
 
