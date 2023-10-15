@@ -59,11 +59,7 @@ class InputEmbedding(nn.Module):
     def forward(self, input):
         input = input.to(self.device)
 
-        # Get the image patcher object
-        # imagePatcher = ImagePatcher(patch_size=self.patch_size)
-        # print(imagePatcher(input).shape)
-
-        # Convolutional layer
+        # Patch the image using a convolutional layer
         patches = self.conv1(input)
         seq_len = (input.shape[2] // self.patch_size) * (input.shape[3] // self.patch_size)
         imagePatches = torch.reshape(patches, [-1, seq_len, self.input_size])
@@ -99,18 +95,6 @@ class Encoder(nn.Module):
             nn.Linear(self.latent_size, self.latent_size),
             nn.GELU(),
             nn.Dropout(self.dropout),
-
-            # nn.Linear(self.latent_size * 4, self.latent_size * 8),
-            # nn.GELU(),
-            # nn.Dropout(self.dropout),
-
-            # nn.Linear(self.latent_size * 8, self.latent_size * 8),
-            # nn.GELU(),
-            # nn.Dropout(self.dropout),
-
-            # nn.Linear(self.latent_size * 8, self.latent_size * 4),
-            # nn.GELU(),
-            # nn.Dropout(self.dropout),
 
             nn.Linear(self.latent_size, self.latent_size),
             nn.GELU(),
@@ -149,9 +133,7 @@ class ViT(nn.Module):
         self.MLP = nn.Sequential(
             nn.LayerNorm(self.latent_size),
             nn.Linear(self.latent_size, self.latent_size),
-            nn.ReLU(),
-            # nn.Linear(self.latent_size, self.num_classes),
-            # nn.ReLU()
+            nn.Linear(self.latent_size, self.num_classes)
         )
 
     def forward(self, input):
@@ -163,4 +145,5 @@ class ViT(nn.Module):
             encoderOut = layer(encoderOut)
 
         # Output of MLP head is classification result
-        return self.MLP(torch.mean(encoderOut, dim=1))
+        out = self.MLP(torch.mean(encoderOut, dim=1))
+        return out
