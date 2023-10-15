@@ -43,7 +43,14 @@ class InputEmbedding(nn.Module):
         self.n_channels = args.n_channels
         self.patch_size = args.patch_size
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.input_size = self.n_channels * self.patch_size ** 2
+        self.input_size = args.hidden_size
+        self.conv1 = nn.Conv2d(
+            in_channels=3,
+            out_channels=args.hidden_size,
+            kernel_size=self.patch_size,
+            stride=self.patch_size,
+            padding='valid'
+        )
 
         self.positionalEmbedding = nn.Parameter(torch.randn(self.batch_size, 1, self.latent_size)).to(self.device)
         self.classToken = nn.Parameter(torch.randn(self.batch_size, 1, self.latent_size)).to(self.device)
@@ -53,10 +60,16 @@ class InputEmbedding(nn.Module):
         input = input.to(self.device)
 
         # Get the image patcher object
-        imagePatcher = ImagePatcher(patch_size=self.patch_size)
+        # imagePatcher = ImagePatcher(patch_size=self.patch_size)
+        # print(imagePatcher(input).shape)
+
+        # Convolutional layer
+        patches = self.conv1(input)
+        seq_len = (input.shape[2] // self.patch_size) * (input.shape[3] // self.patch_size)
+        imagePatches = torch.reshape(patches, [-1, seq_len, self.input_size])
 
         # Project the patched images onto a linear plane using a FC linear layer
-        linearProjection = self.linearProjection(imagePatcher(input)).to(self.device)
+        linearProjection = self.linearProjection(imagePatches).to(self.device)
 
         # Define the class token
         self.classToken = nn.Parameter(torch.randn(linearProjection.shape[0], 1, self.latent_size)).to(self.device)
@@ -83,23 +96,24 @@ class Encoder(nn.Module):
         self.normLayer = nn.LayerNorm(self.latent_size)
         self.attention = nn.MultiheadAttention(self.latent_size, self.num_heads, dropout=self.dropout)
         self.encoderMLP = nn.Sequential(
-            nn.Linear(self.latent_size, self.latent_size * 4),
+            nn.Linear(self.latent_size, self.latent_size),
             nn.GELU(),
             nn.Dropout(self.dropout),
 
-            nn.Linear(self.latent_size * 4, self.latent_size * 8),
-            nn.GELU(),
-            nn.Dropout(self.dropout),
+            # nn.Linear(self.latent_size * 4, self.latent_size * 8),
+            # nn.GELU(),
+            # nn.Dropout(self.dropout),
 
-            nn.Linear(self.latent_size * 8, self.latent_size * 8),
-            nn.GELU(),
-            nn.Dropout(self.dropout),
+            # nn.Linear(self.latent_size * 8, self.latent_size * 8),
+            # nn.GELU(),
+            # nn.Dropout(self.dropout),
 
-            nn.Linear(self.latent_size * 8, self.latent_size * 4),
-            nn.GELU(),
-            nn.Dropout(self.dropout),
+            # nn.Linear(self.latent_size * 8, self.latent_size * 4),
+            # nn.GELU(),
+            # nn.Dropout(self.dropout),
 
-            nn.Linear(self.latent_size * 4, self.latent_size),
+            nn.Linear(self.latent_size, self.latent_size),
+            nn.GELU(),
             nn.Dropout(self.dropout)
         )
     
@@ -129,13 +143,15 @@ class ViT(nn.Module):
         self.num_classes = args.num_classes
         self.num_encoders = args.num_encoders
         self.latent_size = args.latent_size
-        
+
         self.encoders = nn.ModuleList([Encoder(args) for i in range(self.num_encoders)])
         self.embedding = InputEmbedding(args)
         self.MLP = nn.Sequential(
             nn.LayerNorm(self.latent_size),
             nn.Linear(self.latent_size, self.latent_size),
-            nn.Linear(self.latent_size, self.num_classes)
+            nn.ReLU(),
+            # nn.Linear(self.latent_size, self.num_classes),
+            # nn.ReLU()
         )
 
     def forward(self, input):
@@ -146,8 +162,5 @@ class ViT(nn.Module):
         for layer in self.encoders:
             encoderOut = layer(encoderOut)
 
-        # Extract the class token
-        classTokenEmbedded = encoderOut[:, 0]
-
         # Output of MLP head is classification result
-        return self.MLP(classTokenEmbedded)
+        return self.MLP(torch.mean(encoderOut, dim=1))
