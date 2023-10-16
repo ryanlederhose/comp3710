@@ -16,12 +16,12 @@ class HyperParameters(object):
     '''
 
     def __init__(self) -> None:
-        self.patch_size = 16
-        self.latent_size = 128
+        self.patch_size = 8
+        self.latent_size = 256
         self.n_channels = 3
-        self.num_encoders = 6
+        self.num_encoders = 4
         self.num_heads = 4
-        self.dropout = 0.1
+        self.dropout = 0.2
         self.num_classes = 2
         self.epochs = 60
         self.lr = 1e-3
@@ -86,7 +86,6 @@ def train_model(args, train_loader, epoch, device, model, criterion, optimizer):
         tk.set_postfix({"Loss": "%6f" % float(total_loss / (batch_idx + 1))})
     
     accuracy = num_correct / num_samples
-    print(f"Accuracy on training set: {accuracy *100:.2f}")
     return ((total_loss / len(train_loader)), accuracy)
 
 def validate_model(args, val_loader, model, epoch, device, criterion):

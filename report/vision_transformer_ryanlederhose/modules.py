@@ -1,35 +1,6 @@
 import torch
 import torch.nn as nn
 
-class ImagePatcher(nn.Module):
-    '''
-    ImagePatcher
-
-    This class defines the functions necessary to split the input image
-    into a defined unmber of patches
-    '''
-
-    def __init__(self, patch_size=16):
-        super().__init__()
-        self.patch_size = patch_size
-
-    def forward(self, data):
-        batch_size, channels, height, width = data.size()
-        if (height % self.patch_size != 0) or (width % self.patch_size != 0):
-            return 0
-
-        num_patches_h = height // self.patch_size
-        num_patches_w = width // self.patch_size
-        num_patches = num_patches_h * num_patches_w
-
-        patches = data.unfold(2, self.patch_size, self.patch_size). \
-            unfold(3, self.patch_size, self.patch_size). \
-            permute(0, 2, 3, 1, 4, 5). \
-            contiguous(). \
-            view(batch_size, num_patches, -1)
-        
-        return patches
-
 class InputEmbedding(nn.Module):
     '''
     InputEmbedding
@@ -145,5 +116,6 @@ class ViT(nn.Module):
             encoderOut = layer(encoderOut)
 
         # Output of MLP head is classification result
+        # out = self.MLP(encoderOut[:, 0])
         out = self.MLP(torch.mean(encoderOut, dim=1))
         return out
