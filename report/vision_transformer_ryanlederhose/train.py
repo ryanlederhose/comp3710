@@ -22,10 +22,10 @@ class HyperParameters(object):
         self.n_channels = 3
         self.num_encoders = 4
         self.num_heads = 4
-        self.dropout = 0.2
+        self.dropout = 0.1
         self.num_classes = 2
         self.epochs = 60
-        self.lr = 3e-4
+        self.lr = 1e-3
         self.weight_decay = 0
         self.batch_size = 32
         self.dry_run = False
