@@ -9,6 +9,7 @@ class DataLoader(object):
         self.trainingFile = "AD_NC/train/"
         self.testFile = "AD_NC/test/"
         self.validFile = "AD_NC/valid/"
+        # self.imageSize = 240
         self.imageSize = 192
         self.batchSize = batch_size
         self.normalisation = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)

@@ -10,7 +10,8 @@ class InputEmbedding(nn.Module):
     def __init__(self, args) -> None:
         super(InputEmbedding, self).__init__()
         self.batch_size = args.batch_size
-        self.latent_size = args.latent_size
+        self.mlp_dim = args.mlp_dim
+        self.head_dim = args.head_dim
         self.n_channels = args.n_channels
         self.patch_size = args.patch_size
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,9 +24,9 @@ class InputEmbedding(nn.Module):
             padding='valid'
         )
 
-        self.positionalEmbedding = nn.Parameter(torch.randn(self.batch_size, 1, self.latent_size)).to(self.device)
-        self.classToken = nn.Parameter(torch.randn(self.batch_size, 1, self.latent_size)).to(self.device)
-        self.linearProjection = nn.Linear(self.input_size, self.latent_size)
+        self.positionalEmbedding = nn.Parameter(torch.randn(self.batch_size, 1, self.mlp_dim)).to(self.device)
+        self.classToken = nn.Parameter(torch.randn(self.batch_size, 1, self.mlp_dim)).to(self.device)
+        self.linearProjection = nn.Linear(self.input_size, self.mlp_dim)
 
     def forward(self, input):
         input = input.to(self.device)
@@ -39,7 +40,7 @@ class InputEmbedding(nn.Module):
         linearProjection = self.linearProjection(imagePatches).to(self.device)
 
         # Define the class token
-        self.classToken = nn.Parameter(torch.randn(linearProjection.shape[0], 1, self.latent_size)).to(self.device)
+        self.classToken = nn.Parameter(torch.randn(linearProjection.shape[0], 1, self.mlp_dim)).to(self.device)
 
         # Concatenate the class token to the embedding tokens
         linearProjection = torch.cat((self.classToken, linearProjection), dim=1)
@@ -59,15 +60,16 @@ class Encoder(nn.Module):
 
         self.dropout = args.dropout
         self.num_heads = args.num_heads
-        self.latent_size = args.latent_size
-        self.normLayer = nn.LayerNorm(self.latent_size)
-        self.attention = nn.MultiheadAttention(self.latent_size, self.num_heads, dropout=self.dropout)
+        self.mlp_dim = args.mlp_dim
+        self.head_dim = args.head_dim
+        self.normLayer = nn.LayerNorm(self.mlp_dim)
+        self.attention = nn.MultiheadAttention(self.mlp_dim, self.num_heads, dropout=self.dropout)
         self.encoderMLP = nn.Sequential(
-            nn.Linear(self.latent_size, self.latent_size),
+            nn.Linear(self.mlp_dim, self.mlp_dim),
             nn.GELU(),
             nn.Dropout(self.dropout),
 
-            nn.Linear(self.latent_size, self.latent_size),
+            nn.Linear(self.mlp_dim, self.mlp_dim),
             nn.GELU(),
             nn.Dropout(self.dropout)
         )
@@ -97,14 +99,15 @@ class ViT(nn.Module):
         self.dropout = args.dropout
         self.num_classes = args.num_classes
         self.num_encoders = args.num_encoders
-        self.latent_size = args.latent_size
+        self.mlp_dim = args.mlp_dim
+        self.head_dim = args.head_dim
 
         self.encoders = nn.ModuleList([Encoder(args) for i in range(self.num_encoders)])
         self.embedding = InputEmbedding(args)
         self.MLP = nn.Sequential(
-            nn.LayerNorm(self.latent_size),
-            nn.Linear(self.latent_size, self.latent_size),
-            nn.Linear(self.latent_size, self.num_classes)
+            nn.LayerNorm(self.mlp_dim),
+            nn.Linear(self.mlp_dim, self.head_dim),
+            nn.Linear(self.head_dim, self.num_classes)
         )
 
     def forward(self, input):

@@ -17,15 +17,16 @@ class HyperParameters(object):
 
     def __init__(self) -> None:
         self.patch_size = 8
-        self.latent_size = 256
+        self.mlp_dim = 1000
+        self.head_dim = 300
         self.n_channels = 3
         self.num_encoders = 4
         self.num_heads = 4
         self.dropout = 0.2
         self.num_classes = 2
         self.epochs = 60
-        self.lr = 1e-3
-        self.weight_decay = 2e-3
+        self.lr = 3e-4
+        self.weight_decay = 0
         self.batch_size = 32
         self.dry_run = False
         self.hidden_size = 64
